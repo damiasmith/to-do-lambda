@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'to-do-lambda
+
+  '
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs12.x
+Resources:
+  GetAllFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role:
+        Fn::GetAtt:
+        - toDoLambdaExecutionRole
+        - Arn
+      CodeUri: s3://sam-deployments-damia/d0fd44fc8fccbce039ad24e7ef84a463
+      Handler: get-all-cards.handler
+      FunctionName: get-all-cards
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            Path: /cards
+            Method: get
+  PutCardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role:
+        Fn::GetAtt:
+        - toDoLambdaExecutionRole
+        - Arn
+      CodeUri: s3://sam-deployments-damia/d0fd44fc8fccbce039ad24e7ef84a463
+      Handler: put-card.handler
+      FunctionName: put-cards
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: /cards
+            Method: post
+  PutListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role:
+        Fn::GetAtt:
+        - toDoLambdaExecutionRole
+        - Arn
+      CodeUri: s3://sam-deployments-damia/d0fd44fc8fccbce039ad24e7ef84a463
+      Handler: put-list.handler
+      FunctionName: put-lists
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: /lists
+            Method: post
+  UpdateListsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role:
+        Fn::GetAtt:
+        - toDoLambdaExecutionRole
+        - Arn
+      CodeUri: s3://sam-deployments-damia/d0fd44fc8fccbce039ad24e7ef84a463
+      Handler: update-list.handler
+      FunctionName: update-lists
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: /lists/id
+            Method: post
+  CardTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      TableName: cards
+  toDoLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: to-do-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+      ManagedPolicyArns:
+      - Ref: toDoLambdaPermissionPolicy
+      - Ref: basicLambdaPermissionPolicy
+  toDoLambdaPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource:
+            Fn::GetAtt:
+            - CardTable
+            - Arn
+          Action:
+          - dynamodb:DescribeTable
+          - dynamodb:Scan
+          - dynamodb:PutItem
+          - dynamodb:GetItem
+  basicLambdaPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
+          Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:DescribeLogGroups
+          - logs:DescribeLogStreams
+          - logs:PutLogEvents
+          - logs:DeleteLogGroup
+          - logs:DeleteLogStream
+          - logs:DeleteRetentionPolicy
+          - logs:DelteSubscriptionFilter
+          - logs:PutMetricFilter
+          - logs:PutSubscriptionFilter
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:cloudwatch:*:${AWS::AccountId}:dashboard/*
+          Action:
+          - cloudwatch:PutMetricData
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:*
+          Action:
+          - iam:GetPolicy
+          - iam:GetPolicyVersion
+          - iam:GetRole
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - xray:CreateGroup
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords
+          - xray:GetSamplingRules
+          - xray:GetSamplingTargets
+          - xray:GetSamplingStatisticSummaries
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - ec2:DescribeInstances
+          - ec2:ModifyNetworkInterfaceAttribute
+          - ec2:ResetNetworkInterfaceAttribute
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          - ec2:DetachNetworkInterface

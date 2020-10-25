@@ -2,38 +2,185 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   to-do-lambda
-
-  Sample SAM Template for to-do-lambda
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 30
+    Runtime: nodejs12.x
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  GetAllFunction:
+    Type: AWS::Serverless::Function 
     Properties:
-      CodeUri: hello-world/
-      Handler: app.lambdaHandler
-      Runtime: nodejs12.x
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: get-all-cards.handler
+      FunctionName: get-all-cards
+      Environment:
+        Variables:
+          TABLE_NAME: cards
       Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        HttpGet:
+          Type: Api
           Properties:
-            Path: /hello
+            Path: '/cards'
             Method: get
+ 
+  PutCardFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: put-card.handler
+      FunctionName: put-cards
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: '/cards'
+            Method: post
+  
+  PutListFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: put-list.handler
+      FunctionName: put-lists
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: '/lists'
+            Method: post
 
-Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  UpdateListsFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: update-list.handler
+      FunctionName: update-lists
+      Environment:
+        Variables:
+          TABLE_NAME: cards
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            Path: '/lists/id'
+            Method: post
+
+  CardTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: 'id'
+          AttributeType: 'S'
+      BillingMode: 'PAY_PER_REQUEST'
+      KeySchema:
+        -
+          AttributeName: 'id'
+          KeyType: HASH
+      TableName: 'cards'
+
+  # toDoApi:
+  #   Type: AWS::ApigGteway::RestApi
+  #   Properties:
+  #     Name: to-do-app-api
+  #     Description: Api to display to to app
+  #     EndpointConfiguration:
+  #       Types:
+  #         - REGIONAL
+
+  toDoLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: to-do-lambda-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - !Ref toDoLambdaPermissionPolicy
+        - !Ref basicLambdaPermissionPolicy
+
+  toDoLambdaPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Resource: !GetAtt CardTable.Arn
+            Action: 
+              - dynamodb:DescribeTable
+              - dynamodb:Scan
+              - dynamodb:PutItem
+              - dynamodb:GetItem
+
+  basicLambdaPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
+            Action: 
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DescribeLogGroups
+              - logs:DescribeLogStreams
+              - logs:PutLogEvents
+              - logs:DeleteLogGroup
+              - logs:DeleteLogStream
+              - logs:DeleteRetentionPolicy
+              - logs:DelteSubscriptionFilter
+              - logs:PutMetricFilter
+              - logs:PutSubscriptionFilter
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:cloudwatch:*:${AWS::AccountId}:dashboard/*
+            Action: 
+              - cloudwatch:PutMetricData
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:*
+            Action: 
+              - iam:GetPolicy
+              - iam:GetPolicyVersion
+              - iam:GetRole
+          - Effect: Allow
+            Resource: '*'
+            Action: 
+              - xray:CreateGroup
+              - xray:PutTraceSegments
+              - xray:PutTelemetryRecords
+              - xray:GetSamplingRules
+              - xray:GetSamplingTargets
+              - xray:GetSamplingStatisticSummaries
+          - Effect: Allow
+            Resource: '*'
+            Action: 
+              - ec2:DescribeInstances
+              - ec2:ModifyNetworkInterfaceAttribute
+              - ec2:ResetNetworkInterfaceAttribute
+              - ec2:CreateNetworkInterface
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DeleteNetworkInterface
+              - ec2:DetachNetworkInterface
+
+
+
+
