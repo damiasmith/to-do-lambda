@@ -1,8 +1,8 @@
+const parameter = require('./parameter');
 const AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
-require('dotenv').config({path: './to-do-lambda/to-do-handlers/.env'})
 
 const handler = async (event) => {
     if (event.httpMethod !=='POST') {
@@ -10,12 +10,14 @@ const handler = async (event) => {
     }
     console.log('event: ' + JSON.stringify(event));
 
+    const tableName = await parameter.getParameter('/to_do/table_name');
+
     const body = JSON.parse(event.body);
     const list_id = body.list_id;
     const id = body.id;
 
     const params = {
-        TableName: process.env.TABLE_NAME,
+        TableName: tableName,
         Key: {id}
     }
 

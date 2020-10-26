@@ -1,8 +1,8 @@
+const parameter = require('./parameter');
 const AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
-require('dotenv').config({path: './to-do-lambda/to-do-handlers/.env'})
 
 const handler = async (event) => {
     if (event.httpMethod !=='GET') {
@@ -10,10 +10,14 @@ const handler = async (event) => {
     }
     console.log('event: ' + JSON.stringify(event));
 
-    const tableName = process.env.TABLE_NAME;
+    const tableName = await parameter.getParameter('/to_do/table_name')
+
+    const params = {
+        TableName: tableName
+    }
 
     try {
-        const data = await docClient.scan(tableName).promise();
+        const data = await docClient.scan(params).promise();
         const cards = data.Items;
         console.log(cards);
         let response = {

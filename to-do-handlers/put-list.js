@@ -1,8 +1,8 @@
+const parameter = require('./parameter');
 const AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
-require('dotenv').config({path: './to-do-lambda/to-do-handlers/.env'})
 const {'v4': uuidv4} = require('uuid')
 
 const handler = async (event) => {
@@ -11,13 +11,15 @@ const handler = async (event) => {
     }
     console.log('event: ' + JSON.stringify(event));
 
+    const tableName = await parameter.getParameter('/to_do/table_name');
+
     const body = JSON.parse(event.body);
     const listId = uuidv4;
     const cardId = body.card_id;
     const cardTitle = body.title;
 
     const paramsId = {
-        TableName: process.env.TABLE_NAME,
+        TableName: tableName,
         Key: {id: cardId}
     }
     const data = await docClient.get(paramsId).promise();
@@ -37,7 +39,7 @@ const handler = async (event) => {
     console.log(lists);
 
     const params = {
-        TableName: process.env.TABLE_NAME,
+        TableName: tableName,
         Item: {
             id: cardId,
             Title: title

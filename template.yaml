@@ -10,6 +10,13 @@ Globals:
     Runtime: nodejs12.x
 
 Resources:
+  TableName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /to_do/table_name
+      Value: cards
+      Type: String
+
   GetAllFunction:
     Type: AWS::Serverless::Function 
     Properties:
@@ -17,9 +24,6 @@ Resources:
       CodeUri: to-do-handlers/
       Handler: get-all-cards.handler
       FunctionName: get-all-cards
-      Environment:
-        Variables:
-          TABLE_NAME: cards
       Events:
         HttpGet:
           Type: Api
@@ -34,9 +38,6 @@ Resources:
       CodeUri: to-do-handlers/
       Handler: put-card.handler
       FunctionName: put-cards
-      Environment:
-        Variables:
-          TABLE_NAME: cards
       Events:
         HttpPost:
           Type: Api
@@ -51,9 +52,6 @@ Resources:
       CodeUri: to-do-handlers/
       Handler: put-list.handler
       FunctionName: put-lists
-      Environment:
-        Variables:
-          TABLE_NAME: cards
       Events:
         HttpPost:
           Type: Api
@@ -68,9 +66,6 @@ Resources:
       CodeUri: to-do-handlers/
       Handler: update-list.handler
       FunctionName: update-lists
-      Environment:
-        Variables:
-          TABLE_NAME: cards
       Events:
         HttpPost:
           Type: Api
@@ -92,15 +87,6 @@ Resources:
           KeyType: HASH
       TableName: 'cards'
 
-  # toDoApi:
-  #   Type: AWS::ApigGteway::RestApi
-  #   Properties:
-  #     Name: to-do-app-api
-  #     Description: Api to display to to app
-  #     EndpointConfiguration:
-  #       Types:
-  #         - REGIONAL
-
   toDoLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -113,6 +99,7 @@ Resources:
             Principal:
               Service:
               - lambda.amazonaws.com
+              - apigateway.amazonaws.com
       ManagedPolicyArns:
         - !Ref toDoLambdaPermissionPolicy
         - !Ref basicLambdaPermissionPolicy
@@ -130,6 +117,15 @@ Resources:
               - dynamodb:Scan
               - dynamodb:PutItem
               - dynamodb:GetItem
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/to_do/*
+            Action: 
+              - ssm:GetParameters
+              - ssm:GetParameter
+          - Effect: Allow
+            Resource: '*'
+            Action: 
+              - lambda:InvokeFunction
 
   basicLambdaPermissionPolicy:
     Type: AWS::IAM::ManagedPolicy
