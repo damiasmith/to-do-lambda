@@ -14,7 +14,7 @@ const handler = async (event) => {
     const tableName = await parameter.getParameter('/to_do/table_name');
 
     const body = JSON.parse(event.body);
-    const listId = uuidv4;
+    const listId = uuidv4();
     const cardId = body.card_id;
     const cardTitle = body.title;
 
@@ -51,7 +51,7 @@ const handler = async (event) => {
 
         let response = {
             statusCode: 200,
-            body: JSON.stringify(cards)
+            body: JSON.stringify(body)
         }
         return response;
     } catch (err) {

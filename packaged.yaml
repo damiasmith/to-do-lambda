@@ -21,7 +21,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/cefb3e163cb509e21f71f0d87de6dda8
+      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
       Handler: get-all-cards.handler
       FunctionName: get-all-cards
       Events:
@@ -37,7 +37,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/cefb3e163cb509e21f71f0d87de6dda8
+      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
       Handler: put-card.handler
       FunctionName: put-cards
       Events:
@@ -53,7 +53,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/cefb3e163cb509e21f71f0d87de6dda8
+      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
       Handler: put-list.handler
       FunctionName: put-lists
       Events:
@@ -69,7 +69,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/cefb3e163cb509e21f71f0d87de6dda8
+      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
       Handler: update-list.handler
       FunctionName: update-lists
       Events:
@@ -183,3 +183,29 @@ Resources:
           - ec2:DescribeNetworkInterfaces
           - ec2:DeleteNetworkInterface
           - ec2:DetachNetworkInterface
+  cloudwatchLogsPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
+          Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:DescribeLogGroups
+          - logs:DescribeLogStreams
+          - logs:PutLogEvents
+          - logs:DeleteLogGroup
+          - logs:DeleteLogStream
+          - logs:DeleteRetentionPolicy
+          - logs:DelteSubscriptionFilter
+          - logs:PutMetricFilter
+          - logs:PutSubscriptionFilter
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:cloudwatch:*:${AWS::AccountId}:dashboard/*
+          Action:
+          - cloudwatch:PutMetricData

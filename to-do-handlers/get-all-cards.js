@@ -5,9 +5,9 @@ const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
 
 const handler = async (event) => {
-    if (event.httpMethod !=='GET') {
-        throw new Error(`getAllCards only accepts GET methods, you tried ${event.httpMethod}`);
-    }
+    // if (event.httpMethod !=='GET') {
+    //     throw new Error(`getAllCards only accepts GET methods, you tried ${event.httpMethod}`);
+    // }
     console.log('event: ' + JSON.stringify(event));
 
     const tableName = await parameter.getParameter('/to_do/table_name')

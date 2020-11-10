@@ -49,7 +49,7 @@ const handler = async (event) => {
 
         let response = {
             statusCode: 200,
-            body: JSON.stringify(cards)
+            body: JSON.stringify(card)
         }
         return response;
     } catch (err) {

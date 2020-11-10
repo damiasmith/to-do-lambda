@@ -177,6 +177,31 @@ Resources:
               - ec2:DeleteNetworkInterface
               - ec2:DetachNetworkInterface
 
+  cloudwatchLogsPermissionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
+            Action: 
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DescribeLogGroups
+              - logs:DescribeLogStreams
+              - logs:PutLogEvents
+              - logs:DeleteLogGroup
+              - logs:DeleteLogStream
+              - logs:DeleteRetentionPolicy
+              - logs:DelteSubscriptionFilter
+              - logs:PutMetricFilter
+              - logs:PutSubscriptionFilter
+          - Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:cloudwatch:*:${AWS::AccountId}:dashboard/*
+            Action: 
+              - cloudwatch:PutMetricData
+
 
 
 
