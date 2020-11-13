@@ -12,7 +12,7 @@ const handler = async (event) => {
 
     const tableName = await parameter.getParameter('/to_do/table_name');
 
-    const cardId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const cardId = Math.random().toString().substring(2, 15) + Math.random().toString().substring(2, 15);
     const title = event.title;
 
     const params = {
@@ -28,7 +28,10 @@ const handler = async (event) => {
 
         let response = {
             statusCode: 200,
-            body: JSON.stringify(event)
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+            },
+            body: JSON.stringify({'Title': title, 'id': cardId})
         }
         return response;
     } catch (err) {

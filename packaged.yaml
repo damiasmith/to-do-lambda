@@ -21,15 +21,9 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
+      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
       Handler: get-all-cards.handler
       FunctionName: get-all-cards
-      Events:
-        HttpGet:
-          Type: Api
-          Properties:
-            Path: /cards
-            Method: get
   PutCardFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -37,15 +31,9 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
+      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
       Handler: put-card.handler
       FunctionName: put-cards
-      Events:
-        HttpPost:
-          Type: Api
-          Properties:
-            Path: /cards
-            Method: post
   PutListFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -53,15 +41,9 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
+      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
       Handler: put-list.handler
       FunctionName: put-lists
-      Events:
-        HttpPost:
-          Type: Api
-          Properties:
-            Path: /lists
-            Method: post
   UpdateListsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -69,15 +51,275 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/46721dba350095af968e4ada0151c688
+      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
       Handler: update-list.handler
       FunctionName: update-lists
-      Events:
-        HttpPost:
-          Type: Api
-          Properties:
-            Path: /lists/id
-            Method: post
+  ToDoApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: to-do-app-api
+      Description: API to display to do app
+      EndpointConfiguration:
+        Types:
+        - REGIONAL
+  CardsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ParentId:
+        Fn::GetAtt:
+        - ToDoApi
+        - RootResourceId
+      PathPart: cards
+  CardOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: CardsResource
+      HttpMethod: OPTIONS
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''POST,OPTIONS'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: false
+          method.response.header.Access-Control-Allow-Methods: false
+          method.response.header.Access-Control-Allow-Origin: false
+  CardsMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: CardsResource
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt:
+              - GetAllFunction
+              - Arn
+  CardsGetApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - GetAllFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/GET/cards
+  CardsMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: CardsResource
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt:
+              - PutCardFunction
+              - Arn
+  CardsPostApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - PutCardFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/cards
+  ListsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ParentId:
+        Fn::GetAtt:
+        - ToDoApi
+        - RootResourceId
+      PathPart: lists
+  IdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ParentId:
+        Ref: ListsResource
+      PathPart: id
+  ListOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: ListsResource
+      HttpMethod: OPTIONS
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''POST,OPTIONS'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: false
+          method.response.header.Access-Control-Allow-Methods: false
+          method.response.header.Access-Control-Allow-Origin: false
+  IdOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: IdResource
+      HttpMethod: OPTIONS
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''POST,OPTIONS'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: false
+          method.response.header.Access-Control-Allow-Methods: false
+          method.response.header.Access-Control-Allow-Origin: false
+  ListsMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: ListsResource
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt:
+              - PutListFunction
+              - Arn
+  ListsPostApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - PutListFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/lists
+  IdMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: IdResource
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt:
+              - UpdateListsFunction
+              - Arn
+  IdPostApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - UpdateListsFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/list/{listId}
+  Deployment:
+    DependsOn: IdMethodPost
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+  ApiGateWayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      DeploymentId:
+        Ref: Deployment
+      StageName: dev
+      MethodSettings:
+      - DataTraceEnabled: true
+        HttpMethod: '*'
+        LoggingLevel: INFO
+        ResourcePath: /*
+        MetricsEnabled: true
   CardTable:
     Type: AWS::DynamoDB::Table
     Properties:

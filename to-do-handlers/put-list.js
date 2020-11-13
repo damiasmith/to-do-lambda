@@ -3,20 +3,18 @@ const AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
-const {'v4': uuidv4} = require('uuid')
 
 const handler = async (event) => {
-    if (event.httpMethod !=='POST') {
-        throw new Error(`putLists only accepts POST methods, you tried ${event.httpMethod}`);
-    }
+    // if (event.httpMethod !=='POST') {
+    //     throw new Error(`putLists only accepts POST methods, you tried ${event.httpMethod}`);
+    // }
     console.log('event: ' + JSON.stringify(event));
 
     const tableName = await parameter.getParameter('/to_do/table_name');
 
-    const body = JSON.parse(event.body);
-    const listId = uuidv4();
-    const cardId = body.card_id;
-    const cardTitle = body.title;
+    const listId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const cardId = event.card_id;
+    const cardTitle = event.title;
 
     const paramsId = {
         TableName: tableName,
@@ -32,8 +30,8 @@ const handler = async (event) => {
     lists.push(
         {
             list_id: listId,
-            description: body.description,
-            complete: body.completed
+            description: event.description,
+            completed: event.completed
         }
     )
     console.log(lists);
@@ -42,7 +40,8 @@ const handler = async (event) => {
         TableName: tableName,
         Item: {
             id: cardId,
-            Title: title
+            Title: cardTitle,
+            lists: lists
         }
     }
 
@@ -51,7 +50,10 @@ const handler = async (event) => {
 
         let response = {
             statusCode: 200,
-            body: JSON.stringify(body)
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+            },
+            body: JSON.stringify(event)
         }
         return response;
     } catch (err) {

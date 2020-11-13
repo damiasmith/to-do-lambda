@@ -22,6 +22,9 @@ const handler = async (event) => {
         console.log(cards);
         let response = {
             statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "*",
+            },
             body: JSON.stringify(cards)
         }
         return response;
