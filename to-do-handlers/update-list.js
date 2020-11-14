@@ -17,34 +17,32 @@ const handler = async (event) => {
 
     const params = {
         TableName: tableName,
-        Key: {
-            id
-        }
-
+        Key: { id }
     }
 
     try {
         const data = await docClient.get(params).promise();
         console.log(data);
         let card = data.Item;
-        console.log(card);
         let lists = card.lists;
 
-        for (let i = 0; i <lists.length; i++){
-            if (lists[i].list_id === list_id) {
-                let completed = lists[i].completed;
-                console.log(completed);
-                if (completed === false) {
-                    completed = true
-                } else completed = false
-                card.lists[i].completed = completed
-                console.log('card: ', card)
+        let newLists = []
+
+        await lists.forEach(list => {
+            if (list.list_id === list_id) {
+                let completed = list.completed;
+                if (completed === false) completed = true
+                else completed = false
+                list.completed = completed
+                newLists.push(list);
             }
-        }
+        })
+
+        card.lists = newLists
 
         const cardParams = {
             TableName: tableName,
-            Key: {id},
+            Key: { id },
             Item: card
         }
 
@@ -60,7 +58,7 @@ const handler = async (event) => {
         return response;
     } catch (err) {
         console.log('updateList', err);
-        throw new Error('updateList', err);
+        throw new Error('list not updated', err);
     }
 }
 module.exports = { handler };

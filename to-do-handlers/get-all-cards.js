@@ -27,6 +27,7 @@ const handler = async (event) => {
             },
             body: JSON.stringify(cards)
         }
+        console.log('response', response)
         return response;
     } catch (err) {
         console.log('getAllCards', err);

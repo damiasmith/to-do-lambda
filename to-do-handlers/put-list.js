@@ -58,7 +58,7 @@ const handler = async (event) => {
         return response;
     } catch (err) {
         console.log('putList', err);
-        throw new Error(err);
+        throw new Error('list not added', err);
     }
 }
 module.exports = { handler };

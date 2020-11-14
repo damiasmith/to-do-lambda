@@ -21,7 +21,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
+      CodeUri: s3://sam-deployments-damia/30053ec63b9fc7587f926bb2d765c225
       Handler: get-all-cards.handler
       FunctionName: get-all-cards
   PutCardFunction:
@@ -31,7 +31,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
+      CodeUri: s3://sam-deployments-damia/30053ec63b9fc7587f926bb2d765c225
       Handler: put-card.handler
       FunctionName: put-cards
   PutListFunction:
@@ -41,7 +41,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
+      CodeUri: s3://sam-deployments-damia/30053ec63b9fc7587f926bb2d765c225
       Handler: put-list.handler
       FunctionName: put-lists
   UpdateListsFunction:
@@ -51,7 +51,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/41281c96ec1ef8c76b1d66adff8090ea
+      CodeUri: s3://sam-deployments-damia/30053ec63b9fc7587f926bb2d765c225
       Handler: update-list.handler
       FunctionName: update-lists
   ToDoApi:

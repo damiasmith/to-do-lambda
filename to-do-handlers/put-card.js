@@ -10,12 +10,10 @@ const handler = async (event) => {
     // }
     console.log('event: ' + JSON.stringify(event));
 
-    const body = event.body
-
     const tableName = await parameter.getParameter('/to_do/table_name');
 
     const cardId = Math.random().toString().substring(2, 15) + Math.random().toString().substring(2, 15);
-    const title = JSON.parse(body.title);
+    const title = event.title;
 
     const params = {
         TableName: tableName,
