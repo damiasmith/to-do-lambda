@@ -34,8 +34,8 @@ const handler = async (event) => {
                 if (completed === false) completed = true
                 else completed = false
                 list.completed = completed
-                newLists.push(list);
             }
+            newLists.push(list);
         })
 
         card.lists = newLists

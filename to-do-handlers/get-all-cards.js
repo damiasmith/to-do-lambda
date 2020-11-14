@@ -19,7 +19,7 @@ const handler = async (event) => {
     try {
         const data = await docClient.scan(params).promise();
         const cards = data.Items;
-        console.log(cards);
+
         let response = {
             statusCode: 200,
             headers: {
@@ -27,7 +27,6 @@ const handler = async (event) => {
             },
             body: JSON.stringify(cards)
         }
-        console.log('response', response)
         return response;
     } catch (err) {
         console.log('getAllCards', err);
