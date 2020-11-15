@@ -57,6 +57,14 @@ Resources:
       Handler: delete-card.handler
       FunctionName: delete-cards
 
+  DeleteListFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: delete-list.handler
+      FunctionName: delete-lists
+
   ToDoApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -266,6 +274,28 @@ Resources:
       FunctionName: !GetAtt PutListFunction.Arn
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/lists"
+
+  ListsMethodDelete:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ToDoApi
+      ResourceId: !Ref ListsResource
+      AuthorizationType: NONE
+      HttpMethod: DELETE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: DELETE
+        Uri: !Sub
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations"
+          - lambdaArn: !GetAtt DeleteListFunction.Arn
+
+  ListsDeleteApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DeleteListFunction.Arn
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/DELETE/lists"
 
   IdMethodPost:
     Type: AWS::ApiGateway::Method
