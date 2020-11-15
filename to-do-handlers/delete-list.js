@@ -5,25 +5,25 @@ const dynamoDb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamoDb.DocumentClient();
 
 const handler = async (event) => {
-    // if (event.httpMethod !=='POST') {
-    //     throw new Error(`putCard only accepts POST methods, you tried ${event.httpMethod}`);
+    // if (event.httpMethod !=='DETETE') {
+    //     throw new Error(`deleteCard only accepts 'DETETE' methods, you tried ${event.httpMethod}`);
     // }
     console.log('event: ' + JSON.stringify(event));
 
     const tableName = await parameter.getParameter('/to_do/table_name');
 
-    const cardId = Math.random().toString().substring(2, 15) + Math.random().toString().substring(2, 15);
-    const title = event.title;
+    const id = event.id;
 
     const params = {
         TableName: tableName,
-        Item: {
-            id: cardId,
-            Title: title
-        }
+        Key: { id }
     }
 
     try {
+        const getCards = await docClient.get(params).promise();
+        let card = data.Item;
+        let lists = card.lists;
+
         const result = await docClient.put(params).promise();
 
         let response = {
@@ -31,12 +31,12 @@ const handler = async (event) => {
             headers: {
                 "Access-Control-Allow-Origin": "*",
             },
-            body: JSON.stringify({'Title': title, 'id': cardId})
+            body: JSON.stringify({'id': id})
         }
         return response;
     } catch (err) {
-        console.log('putCard', err);
-        throw new Error('card not added', err);
+        console.log('deleteCard', err);
+        throw new Error('card not deleted', err);
     }
 }
 module.exports = { handler };

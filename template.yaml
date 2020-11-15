@@ -49,6 +49,14 @@ Resources:
       Handler: update-list.handler
       FunctionName: update-lists
 
+  DeleteCardFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt toDoLambdaExecutionRole.Arn
+      CodeUri: to-do-handlers/
+      Handler: delete-card.handler
+      FunctionName: delete-cards
+
   ToDoApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -142,6 +150,28 @@ Resources:
       FunctionName: !GetAtt PutCardFunction.Arn
       Principal: "apigateway.amazonaws.com"
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/cards"
+
+  CardsMethodDelete:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ToDoApi
+      ResourceId: !Ref CardsResource
+      AuthorizationType: NONE
+      HttpMethod: DELETE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: DELETE
+        Uri: !Sub
+          - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations"
+          - lambdaArn: !GetAtt DeleteCardFunction.Arn
+      
+  CardsDeleteApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DeleteCardFunction.Arn
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/DELETE/cards"
 
   ListsResource:
     Type: AWS::ApiGateway::Resource
@@ -322,6 +352,7 @@ Resources:
               - dynamodb:Scan
               - dynamodb:PutItem
               - dynamodb:GetItem
+              - dynamodb:DeleteItem
           - Effect: Allow
             Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/to_do/*
             Action: 

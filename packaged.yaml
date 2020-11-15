@@ -21,7 +21,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/4f4ab4df5f7afa611aed04fc2e80e83e
+      CodeUri: s3://sam-deployments-damia/0a4a872f10d35fdba5cb739e035bfb4f
       Handler: get-all-cards.handler
       FunctionName: get-all-cards
   PutCardFunction:
@@ -31,7 +31,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/4f4ab4df5f7afa611aed04fc2e80e83e
+      CodeUri: s3://sam-deployments-damia/0a4a872f10d35fdba5cb739e035bfb4f
       Handler: put-card.handler
       FunctionName: put-cards
   PutListFunction:
@@ -41,7 +41,7 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/4f4ab4df5f7afa611aed04fc2e80e83e
+      CodeUri: s3://sam-deployments-damia/0a4a872f10d35fdba5cb739e035bfb4f
       Handler: put-list.handler
       FunctionName: put-lists
   UpdateListsFunction:
@@ -51,9 +51,19 @@ Resources:
         Fn::GetAtt:
         - toDoLambdaExecutionRole
         - Arn
-      CodeUri: s3://sam-deployments-damia/4f4ab4df5f7afa611aed04fc2e80e83e
+      CodeUri: s3://sam-deployments-damia/0a4a872f10d35fdba5cb739e035bfb4f
       Handler: update-list.handler
       FunctionName: update-lists
+  DeleteCardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role:
+        Fn::GetAtt:
+        - toDoLambdaExecutionRole
+        - Arn
+      CodeUri: s3://sam-deployments-damia/0a4a872f10d35fdba5cb739e035bfb4f
+      Handler: delete-card.handler
+      FunctionName: delete-cards
   ToDoApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -162,6 +172,36 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn:
         Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/POST/cards
+  CardsMethodDelete:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ToDoApi
+      ResourceId:
+        Ref: CardsResource
+      AuthorizationType: NONE
+      HttpMethod: DELETE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: DELETE
+        Uri:
+          Fn::Sub:
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn:
+              Fn::GetAtt:
+              - DeleteCardFunction
+              - Arn
+  CardsDeleteApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - DeleteCardFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ToDoApi}/*/DELETE/cards
   ListsResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -363,6 +403,7 @@ Resources:
           - dynamodb:Scan
           - dynamodb:PutItem
           - dynamodb:GetItem
+          - dynamodb:DeleteItem
         - Effect: Allow
           Resource:
             Fn::Sub: arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/to_do/*
