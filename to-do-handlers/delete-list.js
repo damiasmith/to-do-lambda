@@ -2,6 +2,7 @@ const parameter = require('./parameter');
 const AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 const dynamoDb = require('aws-sdk/clients/dynamodb');
+const getAllCards = require('./get-all-cards');
 const docClient = new dynamoDb.DocumentClient();
 
 const handler = async (event) => {
@@ -43,7 +44,7 @@ const handler = async (event) => {
             headers: {
                 "Access-Control-Allow-Origin": "*",
             },
-            body: JSON.stringify({'id': card.id, 'Title': card.Title})
+            body: JSON.stringify({'id': card.id, 'Title': card.Title, 'lists': card.lists})
         }
         return response;
     } catch (err) {
